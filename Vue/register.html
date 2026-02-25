@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscription - Lofilm</title>
     <style>
+        /* TES STYLES EXISTANTS - GARDE LES MÊMES */
         * {
             margin: 0;
             padding: 0;
@@ -173,16 +174,47 @@
     </div>
 
     <script>
+        // =============================================
+        // CONFIGURATION UNIQUEMENT POUR RENDER
+        // =============================================
+        const API_URL = 'https://projet-4-4qcd.onrender.com/api';
+        
+        console.log('🔗 API URL (production):', API_URL);
+
+        // =============================================
+        // GESTION DE L'INSCRIPTION
+        // =============================================
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
+            // Récupération des valeurs
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const alert = document.getElementById('alert');
 
+            // Validation rapide
+            if (!name || !email || !password) {
+                showAlert('Tous les champs sont obligatoires', 'error', alert);
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Le mot de passe doit contenir au moins 6 caractères', 'error', alert);
+                return;
+            }
+
+            // Afficher un message de chargement
+            showAlert('Inscription en cours...', 'info', alert);
+            const submitBtn = document.querySelector('.btn-primary');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CHARGEMENT...';
+
             try {
-                const response = await fetch('http://localhost:3000/api/auth/register', {
+                console.log('📤 Envoi à:', `${API_URL}/auth/register`);
+                console.log('📦 Données:', { name, email, password: '***' });
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -190,30 +222,59 @@
                     body: JSON.stringify({ name, email, password })
                 });
 
-                if (response.ok) {
-                    showAlert('Compte créé avec succès ! Redirection...', 'success', alert);
+                const data = await response.json();
+                console.log('📥 Réponse brute:', response.status, data);
+
+                if (response.ok && data.success) {
+                    showAlert('✅ Compte créé avec succès ! Redirection...', 'success', alert);
+                    
+                    // Redirection vers la page de connexion
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 2000);
                 } else {
-                    const error = await response.text();
-                    showAlert(error || "Erreur lors de l'inscription", 'error', alert);
+                    // Gestion des erreurs
+                    const errorMessage = data.message || data.error || "Erreur lors de l'inscription";
+                    showAlert(errorMessage, 'error', alert);
+                    
+                    // Réactiver le bouton
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'CRÉER UN COMPTE';
                 }
             } catch (error) {
-                console.error('Erreur lors de l\'inscription:', error);
-                showAlert('Erreur lors de l\'inscription', 'error', alert);
+                console.error('❌ Erreur réseau détaillée:', error);
+                showAlert('Erreur de connexion au serveur. Vérifiez que le serveur est accessible.', 'error', alert);
+                
+                // Réactiver le bouton
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'CRÉER UN COMPTE';
             }
         });
 
+        // =============================================
+        // FONCTION D'AFFICHAGE DES ALERTES
+        // =============================================
         function showAlert(message, type, element) {
             element.textContent = message;
             element.className = 'alert';
-            element.classList.add(type === 'success' ? 'alert-success' : 'alert-error');
+            
+            if (type === 'success') {
+                element.classList.add('alert-success');
+            } else if (type === 'error') {
+                element.classList.add('alert-error');
+            } else {
+                element.style.background = '#333';
+                element.style.color = '#ffa500';
+            }
+            
             element.style.display = 'block';
 
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
+            // L'alerte disparaît après 5 secondes (sauf pour les erreurs qu'on garde)
+            if (type !== 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
         }
     </script>
 </body>
