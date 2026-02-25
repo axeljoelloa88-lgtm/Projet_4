@@ -2,28 +2,26 @@ const express = require('express');
 const router = express.Router();
 const AuthentificationDAO = require('../Model/AuthentificationDAO');
 const bcrypt = require('bcrypt');
-
+const jwt = require('jsonwebtoken'); // <-- AJOUTER
 
 /**
  * Enregistre un nouvel utilisateur s’il n'existe pas déjà.
- * Les données sont envoyées dans le corps de la requête (email, password).
  */
-
 router.post('/register', async (req, res) => {
     const user = req.body;
 
     try {
-        // 2. Hachage du mot de passe
+        // Hachage du mot de passe
         const hashedPassword = await bcrypt.hash(user.password, 10);
 
-        // 3. Prépare l'objet utilisateur pour le DAO
+        // Prépare l'objet utilisateur pour le DAO
         const newUser = {
             email: user.email,
-            password: hashedPassword, // <-- mot de passe haché
+            password: hashedPassword,
             name: user.name
         };
 
-        // 4. Insertion en base via le DAO
+        // Insertion en base via le DAO
         AuthentificationDAO.SetInscription(newUser, (err, results) => {
             if (err) {
                 return res.status(500).send('Erreur serveur');
@@ -38,27 +36,36 @@ router.post('/register', async (req, res) => {
     }
 });
 
-
-// Dans AuthentificationController.js - Modifiez la route /login
+/**
+ * Connexion - Renvoie un token JWT
+ */
 router.post('/login', (req, res) => {
     const user = req.body;
+    
     AuthentificationDAO.SetLogin(user, (err, dbUser) => {
         if (err) {
-            res.status(500).json({ success: false, message: "Erreur serveur" });
-        } else if (dbUser) {
-            // Stocke l'utilisateur dans la session
-            req.session.user = {
-                id: dbUser.id,
-                email: dbUser.email,
-                name: dbUser.name
-            };
+            return res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+        
+        if (dbUser) {
+            // ✅ CRÉATION DU TOKEN JWT (à la place de la session)
+            const token = jwt.sign(
+                { 
+                    id: dbUser.id,
+                    email: dbUser.email,
+                    name: dbUser.name
+                },
+                process.env.JWT_SECRET, // Depuis .env
+                { expiresIn: '7d' }      // Token valable 7 jours
+            );
             
-            console.log("Session créée :", req.session.user);
+            console.log("Token JWT créé pour :", dbUser.email);
 
-            // Réponse avec les données utilisateur
+            // ✅ Réponse avec le token (pas de session !)
             res.status(200).json({ 
                 success: true, 
                 message: "Connexion réussie",
+                token: token,           // <-- LE CLIENT DEVRA STOCKER CE TOKEN
                 user: {
                     id: dbUser.id,
                     email: dbUser.email,
@@ -71,32 +78,25 @@ router.post('/login', (req, res) => {
     });
 });
 
-
-    
-
 /**
- * Simule une déconnexion.
+ * Déconnexion - Côté serveur, on ne fait rien avec JWT
+ * (c'est le client qui supprime le token)
  */
 router.get('/logout', (req, res) => {
+    // Avec JWT, pas besoin de détruire de session côté serveur !
+    // Le client supprimera le token de son localStorage
+    
     AuthentificationDAO.Logout((err, isValid) => {
         if (err) {
             return res.status(500).send("Erreur serveur");
         }
-
-        // Tuer la session
-        req.session.destroy((err) => {
-            if (err) {
-                return res.status(500).send("Erreur lors de la suppression de la session");
-            }
-
-            // Effacer le cookie lié à la session
-            res.clearCookie('connect.sid'); // nom par défaut d’express-session
-            
-            console.log("Session terminée");
-            return res.status(200).send("Déconnexion réussie");
+        
+        console.log("Déconnexion réussie (côté serveur)");
+        return res.status(200).json({ 
+            success: true, 
+            message: "Déconnexion réussie" 
         });
     });
 });
-
 
 module.exports = router;

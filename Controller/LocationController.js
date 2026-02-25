@@ -1,42 +1,68 @@
 const express = require('express');
 const router = express.Router();
 const LocationDAO = require('../Model/LocationDAO');
+const authenticateToken = require('../Middleware/authJWT'); // <-- IMPORTER LE MIDDLEWARE
 
-router.post('/location', (req, res) => {
-    // 1. Vérifier la session 
-    if (!req.session.user) {
-        return res.status(401).send("Vous devez être connecté pour louer un film.");
+// Louer un film - PROTÉGÉ
+router.post('/location', authenticateToken, (req, res) => {
+    // Plus besoin de vérifier req.session.user
+    // Le middleware garantit que l'utilisateur est authentifié
+    // Ses infos sont dans req.user
+    
+    // Récupérer les données du corps de la requête
+    const filmId = req.body.filmId;
+    const userId = req.user.id; // <-- VIENT DU TOKEN MAINTENANT !
+    
+    // Vérifier que filmId est présent
+    if (!filmId) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "L'ID du film est requis" 
+        });
     }
 
-    // 2. Récupérer les données du corps de la requête
-    const  filmId = req.body.filmId;
-    const userId = req.session.user.id;
-
-    // 3. Appeler la fonction du DAO pour louer le film
+    // Appeler la fonction du DAO pour louer le film
     LocationDAO.LouerFilm(userId, filmId, (err, result) => {
         if (err) {
-            return res.status(400).json(err); 
+            return res.status(400).json({ 
+                success: false, 
+                error: err 
+            }); 
         }
-        res.status(201).json({ success: true, message: result.message });
+        res.status(201).json({ 
+            success: true, 
+            message: result.message 
+        });
     });
 });
 
-router.post('/retour', (req, res) => {
+// Retourner un film - PROTÉGÉ
+router.post('/retour', authenticateToken, (req, res) => {
+    // Le middleware garantit que l'utilisateur est authentifié
     
-    if (!req.session.user) {
-        return res.status(401).send("Vous devez être connecté pour retourner un film.");
+    const { filmId } = req.body;
+    const userId = req.user.id; // <-- VIENT DU TOKEN
+    
+    // Vérifier que filmId est présent
+    if (!filmId) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "L'ID du film est requis" 
+        });
     }
-    const {filmId} = req.body;
-     const userId = req.session.user.id;
+    
     LocationDAO.RetournerFilm(userId, filmId, (err, result) => {
         if (err) {
-            return res.status(400).json(err);
+            return res.status(400).json({ 
+                success: false, 
+                error: err 
+            });
         }
-        res.status(200).json({success: true,  message: result.message });
+        res.status(200).json({ 
+            success: true, 
+            message: result.message 
+        });
     });
 });
-
-
-
 
 module.exports = router;
