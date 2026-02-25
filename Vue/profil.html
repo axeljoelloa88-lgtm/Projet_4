@@ -69,13 +69,11 @@
             background: #ffb732;
             transform: translateY(-1px);
         }
-
         .container {
             padding: 2rem 4%;
             max-width: 1000px;
             margin: 0 auto;
         }
-
         .page-header {
             margin-bottom: 2rem;
         }
@@ -91,13 +89,11 @@
             font-size: 1.1rem;
             font-weight: 300;
         }
-
         .profile-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2rem;
         }
-
         .profile-card {
             background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
             border-radius: 8px;
@@ -107,7 +103,6 @@
         .profile-card.full-width {
             grid-column: 1 / -1;
         }
-
         .profile-header {
             display: flex;
             align-items: center;
@@ -138,7 +133,6 @@
             margin: 0.2rem 0;
             font-size: 0.9rem;
         }
-
         .info-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -173,7 +167,6 @@
             color: #ffffff;
             font-weight: 600;
         }
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -198,7 +191,6 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -245,7 +237,6 @@
             background: #ffb732;
             transform: translateY(-1px);
         }
-
         .alert {
             padding: 1rem;
             border-radius: 4px;
@@ -261,7 +252,6 @@
             background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
             color: #000;
         }
-
         .loading {
             text-align: center;
             padding: 3rem;
@@ -276,7 +266,6 @@
             text-align: center;
             font-weight: 600;
         }
-
         @media (max-width: 768px) {
             .profile-content {
                 grid-template-columns: 1fr;
@@ -315,24 +304,75 @@
     </div>
 
     <script>
+        // =============================================
+        // CONFIGURATION UNIQUEMENT POUR RENDER
+        // =============================================
+        const API_URL = 'https://projet-4-4qcd.onrender.com/api';
+        
+        console.log('🚀 Page profil.html chargée');
+        console.log('🔗 API URL:', API_URL);
+        
+        const token = localStorage.getItem('token');
+        console.log('📦 Token:', token ? '✅ PRÉSENT' : '❌ ABSENT');
+
         let userStats = {
             totalRentals: 0,
             activeRentals: 0,
             returnedRentals: 0
         };
 
+        // =============================================
+        // VÉRIFICATION AU CHARGEMENT
+        // =============================================
         document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                console.log('❌ Pas de token, redirection vers login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
             loadProfile();
         });
 
+        // =============================================
+        // CHARGEMENT DU PROFIL
+        // =============================================
         async function loadProfile() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             try {
-                const response = await fetch('http://localhost:3000/api/profil', {
-                    credentials: 'include'
+                console.log('📤 Chargement du profil...');
+                
+                const response = await fetch(`${API_URL}/profil`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
+
+                console.log('📥 Statut réponse:', response.status);
+
+                // Token invalide ou expiré
+                if (response.status === 401 || response.status === 403) {
+                    console.log('❌ Token invalide ou expiré, nettoyage...');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('📥 Données profil:', result);
+                    
                     if (result.success) {
                         displayProfile(result.data);
                         loadRentalStats();
@@ -343,11 +383,14 @@
                     throw new Error('Erreur lors du chargement du profil');
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('❌ Erreur:', error);
                 showError('Erreur lors du chargement du profil');
             }
         }
 
+        // =============================================
+        // AFFICHAGE DU PROFIL
+        // =============================================
         function displayProfile(user) {
             const profileContent = document.getElementById('profile-content');
             
@@ -423,10 +466,23 @@
             setupPasswordForm();
         }
 
+        // =============================================
+        // CHARGEMENT DES STATISTIQUES
+        // =============================================
         async function loadRentalStats() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) return;
+
             try {
-                const response = await fetch('http://localhost:3000/api/profil/mesfilms', {
-                    credentials: 'include'
+                console.log('📤 Chargement des statistiques...');
+                
+                const response = await fetch(`${API_URL}/profil/mesfilms`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.ok) {
@@ -436,13 +492,16 @@
                     }
                 }
             } catch (error) {
-                console.error('Erreur stats:', error);
+                console.error('❌ Erreur stats:', error);
                 document.getElementById('total-rentals').textContent = 'Erreur';
                 document.getElementById('active-rentals').textContent = 'Erreur';
                 document.getElementById('returned-rentals').textContent = 'Erreur';
             }
         }
 
+        // =============================================
+        // MISE À JOUR DES STATISTIQUES
+        // =============================================
         function updateRentalStats(rentals) {
             if (rentals && Array.isArray(rentals)) {
                 userStats.totalRentals = rentals.length;
@@ -471,6 +530,9 @@
             }
         }
 
+        // =============================================
+        // FORMULAIRE DE CHANGEMENT DE MOT DE PASSE
+        // =============================================
         function setupPasswordForm() {
             const form = document.getElementById('password-form');
             form.addEventListener('submit', async function(e) {
@@ -479,6 +541,12 @@
                 const newPassword = document.getElementById('newPassword').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
                 const alert = document.getElementById('password-alert');
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 if (newPassword !== confirmPassword) {
                     showAlert('Les mots de passe ne correspondent pas', 'error', alert);
@@ -491,30 +559,44 @@
                 }
 
                 try {
-                    const response = await fetch('http://localhost:3000/api/profil/password', {
+                    console.log('📤 Changement de mot de passe...');
+                    
+                    const response = await fetch(`${API_URL}/profil/password`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         },
-                        credentials: 'include',
                         body: JSON.stringify({ newPassword: newPassword })
                     });
 
+                    if (response.status === 401 || response.status === 403) {
+                        console.log('❌ Token invalide pendant changement MDP');
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
                     const result = await response.json();
+                    console.log('📥 Réponse changement MDP:', result);
 
                     if (response.ok && result.success) {
-                        showAlert('Mot de passe modifié avec succès !', 'success', alert);
+                        showAlert('✅ Mot de passe modifié avec succès !', 'success', alert);
                         form.reset();
                     } else {
                         showAlert(result.message || 'Erreur lors de la modification', 'error', alert);
                     }
                 } catch (error) {
-                    console.error('Erreur:', error);
+                    console.error('❌ Erreur:', error);
                     showAlert('Erreur lors de la modification', 'error', alert);
                 }
             });
         }
 
+        // =============================================
+        // AFFICHAGE DES ALERTES
+        // =============================================
         function showAlert(message, type, element) {
             element.textContent = message;
             element.className = 'alert';
@@ -526,6 +608,9 @@
             }, 5000);
         }
 
+        // =============================================
+        // AFFICHAGE DES ERREURS
+        // =============================================
         function showError(message) {
             const profileContent = document.getElementById('profile-content');
             profileContent.innerHTML = `
@@ -538,14 +623,26 @@
             `;
         }
 
+        // =============================================
+        // DÉCONNEXION
+        // =============================================
         document.getElementById('logout-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            
             try {
-                await fetch('http://localhost:3000/api/auth/logout', {
-                    credentials: 'include'
-                });
+                if (token) {
+                    await fetch(`${API_URL}/auth/logout`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
             } catch (error) {
-                console.error('Erreur déconnexion:', error);
+                console.error('❌ Erreur déconnexion:', error);
             } finally {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = 'login.html';
             }
         });
