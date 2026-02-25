@@ -1,0 +1,164 @@
+-- USERS
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    date_inscription DATE DEFAULT CURRENT_DATE
+);
+
+-- FILMS
+CREATE TABLE films (
+    id INT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    genre VARCHAR(255),
+    annee_sortie INT,
+    langue_originale VARCHAR(100),
+    pays_productions VARCHAR(255),
+    acteurs TEXT,
+    realisateurs VARCHAR(255),
+    available_copies INT DEFAULT 0,
+    imgpath VARCHAR(500),
+    trailer VARCHAR(500)
+);
+
+-- RENTALS
+CREATE TABLE rentals (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    film_id INT NOT NULL,
+    rental_date TIMESTAMP NOT NULL,
+    return_date TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE
+);
+
+INSERT INTO Users (name, email, password) VALUES
+('Jean Dupont', 'jean.dupont@example.com', '$2a$12$hcDwUii.IN.ugY9F9vmp3OBwQtrssRhI0NTAXELo92nO6TOLTnqzu'),
+('Marie Martin', 'marie.martin@example.com', '$2a$12$vjTXIrVboLAKcuVY55i6Mub8lU0PChmbrQ4zDou0PPFqc9Pf6bnAK'),
+('Lucie Bernard', 'lucie.bernard@example.com', '$2a$12$Bsm3cyteTJ8JDYCFQAlvGuukxNlqEsZDfqDZu8JP5WTi.Uo0CPUH6'),
+('Pierre Moreau', 'pierre.moreau@example.com', '$2b$10$6zmbzeI67s8lBXR9srjnFuiqmCGkbLNlVL2ccnPkdZMI36cxtdhY2');
+
+-- FILMS
+
+INSERT INTO Films (id, title, genre, annee_sortie, langue_originale, pays_productions, acteurs, realisateurs, available_copies, imgPath, trailer)
+VALUES (
+  100758,
+  'Teenage Mutant Ninja Turtles',
+  'Action, Adventure, Comedy, Crime, Drama, Family, Sci-Fi',
+  1990,
+  'English',
+  'Hong Kong, USA',
+  'Brian Tochi, Leonardo, Corey Feldman, Donatello, David Forman, Leonardo, David McCharen, The Shredder, Elias Koteas, Casey Jones, James Saito, The Shredder, Josh Pais, Raphael, Judith Hoag, April O''Neil, Kevin Clash, Splinter, Leif Tilden, Donatello, Michael McConnohie, Tatsu, Michael Turney, Danny Pennington, Michelan Sisti, Michaelangelo, Robbie Rist, Michaelangelo, Toshirô Obata, Tatsu',
+  'Steve Barron',
+  7,
+  'https://www.themoviedb.org/t/p/w1280/eLNxn5R7xngthiRc6HoQC4dqzbF.jpg',
+  'https://www.youtube.com/embed/zxkqixUKZt8?si=rzuudzSmM9n9AZm9'
+);
+
+INSERT INTO Films VALUES (
+  1013752,
+  'Fast & Furious',
+  'Action, Crime, Drama, Thriller',
+  2009,
+  'English',
+  'USA',
+  'Gal Gadot, Gisele Harabo, Greg Cipes, Dwight, Jack Conley, Penning, John Ortiz, Campos, Jordana Brewster, Mia Toretto, Laz Alonso, Fenix Rise, Liza Lapira, Agent Sophie Trinh, Michelle Rodriguez, Letty, Mirtha Michelle, Cara, Paul Walker, Brian O''Conner, Shea Whigham, Agent Ben Stasiak, Sung Kang, Han Lue, Vin Diesel, Dominic Toretto',
+  'Justin Lin',
+  15,
+  'https://www.themoviedb.org/t/p/w1280/wtn3emVfshQIt7Y9pXYRFw4xCuF.jpg',
+  'https://www.youtube.com/embed/k98tBkRsGl4?si=JR7psyc-ZOoD4Ldo'
+);
+
+INSERT INTO Films VALUES (
+  102057,
+  'Hook',
+  'Adventure, Family, Fantasy',
+  1991,
+  'English',
+  'USA',
+  'Amber Scott, Maggie Banning, Arthur Malet, Tootles, Bob Hoskins, Smee, Caroline Goodall, Moira Banning, Charlie Korsmo, Jack ''Jackie'' Banning, Dante Basco, Rufio, Dustin Hoffman, Capt. Hook, Isaiah Robinson, Pockets, Jasen Fisher, Ace, Julia Roberts, Tinkerbell, Maggie Smith, Granny Wendy, Phil Collins, Inspector Good, Raushan Hammond, Thud Butt, Robin Williams, Peter Banning',
+  'Steven Spielberg',
+  9,
+  'https://www.themoviedb.org/t/p/w1280/4iX6zocr2bd1GfjdDjLm6DHz6OR.jpg',
+  'https://www.youtube.com/embed/c-vwgt8cwEM?si=KQ8X6bNXGZVgK9AO'
+);
+
+INSERT INTO Films VALUES (
+  105417,
+  'Sister Act',
+  'Comedy, Crime, Music',
+  1992,
+  'English',
+  'USA',
+  'Bill Nunn, Lt. Eddie Souther, Carmen Zapata, Choir Nun, Ellen Albertini Dow, Choir Nun, Georgia Creighton, Choir Nun, Harvey Keitel, Vince LaRocca, Kathy Najimy, Sister Mary Patrick, Maggie Smith, Mother Superior, Mary Wickes, Sister Mary Lazarus, Pat Crawford Brown, Choir Nun, Prudence Wright Holmes, Choir Nun, Susan Johnson-Kehn, Choir Nun, Wendy Makkena, Sister Mary Robert, Whoopi Goldberg, Deloris Van Cartier',
+  'Emile Ardolino',
+  30,
+  'https://www.themoviedb.org/t/p/w1280/nn0XTBqZf8Q3iXPApE9OQevrYZY.jpg',
+  'https://www.youtube.com/embed/lCBjHkCK1Vw?si=ZAAVGVW1VAs6U9Rg'
+);
+
+INSERT INTO Films VALUES (
+  108052,
+  'Schindler''s List',
+  'Biography, Drama, History, War',
+  1993,
+  'English',
+  'USA',
+  'Andrzej Seweryn, Julian Scherner, Ben Kingsley, Itzhak Stern, Caroline Goodall, Emilie Schindler, Embeth Davidtz, Helen Hirsch, Liam Neeson, Oskar Schindler, Norbert Weisser, Albert Hujar, Ralph Fiennes, Amon Goeth',
+  'Steven Spielberg',
+  18,
+  'https://www.themoviedb.org/t/p/w1280/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg',
+  'https://www.youtube.com/embed/gG22XNhtnoY?si=aAS5RRz0fZv--5s3'
+);
+
+INSERT INTO Films VALUES (
+  1099212,
+  'Twilight',
+  'Drama, Fantasy, Romance',
+  2008,
+  'English',
+  'USA',
+  'Anna Kendrick, Jessica, Ashley Greene, Alice Cullen, Billy Burke, Charlie Swan, Christian Serratos, Angela, Gil Birmingham, Billy Black, Justin Chon, Eric Yorkie, Kellan Lutz, Emmet Cullen, Kristen Stewart, Bella Swan, Michael Welch, Mike Newton, Nikki Reed, Rosalie, Robert Pattinson, Edward Cullen, Sarah Clarke, Renée, Taylor Lautner, Jacob Black',
+  'Catherine Hardwicke',
+  32,
+  'https://www.themoviedb.org/t/p/w1280/8phJ4i9m1tBDJbOwwQPvdeWhN2h.jpg',
+  'https://www.youtube.com/embed/uxjNDE2fMjI?si=9bYvNwKcaxUhcuIp'
+);
+
+INSERT INTO Films VALUES (
+  110413,
+  'Léon',
+  'Crime, Thriller',
+  1994,
+  'English',
+  'France',
+  'Danny Aiello, Tony, Gary Oldman, Stansfield, Jean Reno, Léon, Natalie Portman, Mathilda, Peter Appel, Malky',
+  'Luc Besson',
+  16,
+  'https://www.themoviedb.org/t/p/w1280/oBhmd3261OkJ4Yg2FdSiD2wnyfe.jpg',
+  'https://www.youtube.com/embed/rNw0D7Hh0DY?si=NVeg7NrABBhRNK5u'
+);
+
+INSERT INTO Films VALUES (
+  111503,
+  'True Lies',
+  'Action, Comedy, Romance, Thriller',
+  1994,
+  'English',
+  'USA',
+  'Arnold Schwarzenegger, Harry Tasker, Art Malik, Salim Abu Aziz, Bill Paxton',
+  'James Cameron',
+  11,
+  'https://www.themoviedb.org/t/p/w1280/uCvYz3emqJIF9nIzoDJp7mKxHgG.jpg',
+  'https://www.youtube.com/embed/3B7HG8_xbDw?si=QWU3QXWfIJ_2y9fm'
+);
+
+-- RENTALS
+
+INSERT INTO Rentals (user_id, film_id, rental_date, return_date) VALUES
+(1, 100758, '2025-11-01 10:00:00', '2025-11-05 11:00:00'),
+(2, 105417, '2025-11-02 14:30:00', NULL),
+(3, 1099212, '2025-11-03 16:45:00', '2025-11-07 12:00:00'),
+(4, 1013752, '2025-11-04 09:15:00', NULL),
+(1, 105417, '2025-11-05 18:20:00', NULL);
