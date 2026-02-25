@@ -2,15 +2,15 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
 const path = require('path');
-const cors = require('cors');
-const jwt = require('jsonwebtoken'); // <-- AJOUTÉ
+const cors = require('cors');          // <-- UNE SEULE FOIS
+const jwt = require('jsonwebtoken');
 
 app.use(cookieParser());
 
 // Pour utiliser le body pour les requêtes JSON
 app.use(express.json());
 
-const cors = require('cors');
+// SUPPRIME CETTE LIGNE : const cors = require('cors');  // ← À ENLEVER !
 
 // Configurer CORS pour accepter les requêtes depuis 127.0.0.1:5500
 app.use(cors({
