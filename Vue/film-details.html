@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Détails du film - Lofilm</title>
     <style>
+        /* ===== STYLES IDENTIQUES ===== */
         * {
             margin: 0;
             padding: 0;
@@ -128,6 +129,7 @@
             font-size: 2rem;
             font-weight: bold;
             border: 2px solid #ffa500;
+            overflow: hidden;
         }
         .film-info {
             display: flex;
@@ -336,10 +338,30 @@
     </div>
 
     <script>
+        // =============================================
+        // CONFIGURATION AUTOMATIQUE
+        // =============================================
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000/api'
+            : 'https://projet-4-4qcd.onrender.com/api';
+
+        console.log('🌐 Environnement:', window.location.hostname);
+        console.log('🔗 API URL:', API_URL);
+
         const urlParams = new URLSearchParams(window.location.search);
         const filmId = urlParams.get('id');
 
+        // =============================================
+        // VÉRIFICATION AU CHARGEMENT
+        // =============================================
         document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
             if (filmId) {
                 checkAuth();
             } else {
@@ -347,11 +369,32 @@
             }
         });
 
+        // =============================================
+        // VÉRIFICATION DE L'AUTHENTIFICATION
+        // =============================================
         async function checkAuth() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             try {
-                const response = await fetch('http://localhost:3000/api/profil', {
-                    credentials: 'include'
+                const response = await fetch(`${API_URL}/profil`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
+
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 if (response.ok) {
                     loadFilmDetails();
@@ -359,176 +402,225 @@
                     throw new Error('Non authentifié');
                 }
             } catch (error) {
-                console.error('Erreur auth:', error);
+                console.error('❌ Erreur auth:', error);
                 window.location.href = 'login.html';
             }
         }
 
+        // =============================================
+        // CHARGEMENT DES DÉTAILS DU FILM
+        // =============================================
         async function loadFilmDetails() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) return;
+
             try {
-                const response = await fetch(`http://localhost:3000/api/films/${filmId}`, {
-                    credentials: 'include'
+                console.log('📤 Chargement du film:', filmId);
+                
+                const response = await fetch(`${API_URL}/films/${filmId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
                 if (response.ok) {
-                    const data = await response.json();
-                    displayFilmDetails(data.data);
+                    const result = await response.json();
+                    if (result.success) {
+                        displayFilmDetails(result.data);
+                    } else {
+                        throw new Error(result.message || 'Film non trouvé');
+                    }
                 } else {
                     throw new Error('Film non trouvé');
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('❌ Erreur:', error);
                 showError('Erreur lors du chargement des détails du film');
             }
         }
 
+        // =============================================
+        // AFFICHAGE DES DÉTAILS DU FILM
+        // =============================================
         function displayFilmDetails(film) {
-    const filmContent = document.getElementById('film-content');
-    
-    if (!film) {
-        showError('Film non trouvé');
-        return;
-    }
+            const filmContent = document.getElementById('film-content');
+            
+            if (!film) {
+                showError('Film non trouvé');
+                return;
+            }
 
-    const availableCopies = film.available_copies || 0;
-    const isAvailable = availableCopies > 0;
+            const availableCopies = film.available_copies || 0;
+            const isAvailable = availableCopies > 0;
 
-    const actorsList = film.acteurs ? 
-        film.acteurs.split(', ').slice(0, 10).map(actor => 
-            `<div class="actor-item">${actor.trim()}</div>`
-        ).join('') : 
-        '<div class="actor-item">Aucune information sur le casting</div>';
+            const actorsList = film.acteurs ? 
+                film.acteurs.split(', ').slice(0, 10).map(actor => 
+                    `<div class="actor-item">${actor.trim()}</div>`
+                ).join('') : 
+                '<div class="actor-item">Aucune information sur le casting</div>';
 
-    // NOUVEAU POSTER AVEC IMAGE TMDB
-    const posterContent = film.imgPath && film.imgPath.includes('themoviedb.org') ? 
-        `<img src="${film.imgPath}" 
-              alt="${film.title}" 
-              style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;"
-              onerror="this.onerror=null; this.style.display='none'; this.parentNode.innerHTML='<div style=\\'width: 100%; height: 100%; background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.5rem; font-weight: bold;\\'>LOFILM</div>'">` :
-        `<div style="width: 100%; height: 100%; background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.5rem; font-weight: bold;">
-            LOFILM
-        </div>`;
+            // POSTER AVEC IMAGE TMDB
+            const posterContent = film.imgPath && film.imgPath.includes('themoviedb.org') ? 
+                `<img src="${film.imgPath}" 
+                    alt="${film.title}" 
+                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;"
+                    onerror="this.onerror=null; this.style.display='none'; this.parentNode.innerHTML='<div style=\\'width: 100%; height: 100%; background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.5rem; font-weight: bold;\\'>LOFILM</div>'">` :
+                `<div style="width: 100%; height: 100%; background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.5rem; font-weight: bold;">
+                    LOFILM
+                </div>`;
 
-    filmContent.innerHTML = `
-        <div class="film-details">
-            <div class="film-header">
-                <div class="film-poster">
-                    ${posterContent}
-                </div>
-                <div class="film-info">
-                    <h1 class="film-title">${film.title}</h1>
-                    <div class="film-meta">
-                        <span class="meta-item">${film.annee_sortie || 'N/A'}</span>
-                        <span class="meta-item">${film.genre ? film.genre.split(',')[0] : ''}</span>
-                        <span class="meta-item">${film.langue_originale || 'N/A'}</span>
-                    </div>
-                    <div class="availability ${isAvailable ? '' : 'unavailable'}">
-                        ${isAvailable ? 
-                            `${availableCopies} COPIE${availableCopies > 1 ? 'S' : ''} DISPONIBLE${availableCopies > 1 ? 'S' : ''}` : 
-                            'INDISPONIBLE'
-                        }
-                    </div>
-                    <p style="color: #cccccc; line-height: 1.6;">${film.synopsis || 'Aucun synopsis disponible.'}</p>
-                </div>
-            </div>
-            <!-- Le reste du code reste identique -->
-            <div class="film-content">
-                <div class="info-grid">
-                    <div class="info-section">
-                        <h3>INFORMATIONS TECHNIQUES</h3>
-                        <div class="info-item">
-                            <span class="info-label">Réalisateur</span>
-                            <span class="info-value">${film.realisateurs || 'Non spécifié'}</span>
+            filmContent.innerHTML = `
+                <div class="film-details">
+                    <div class="film-header">
+                        <div class="film-poster">
+                            ${posterContent}
                         </div>
-                        <div class="info-item">
-                            <span class="info-label">Genre</span>
-                            <span class="info-value">${film.genre || 'Non spécifié'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Année</span>
-                            <span class="info-value">${film.annee_sortie || 'Non spécifié'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Langue</span>
-                            <span class="info-value">${film.langue_originale || 'Non spécifié'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Pays</span>
-                            <span class="info-value">${film.pays_productions || 'Non spécifié'}</span>
+                        <div class="film-info">
+                            <h1 class="film-title">${film.title || 'Titre non disponible'}</h1>
+                            <div class="film-meta">
+                                <span class="meta-item">${film.annee_sortie || 'N/A'}</span>
+                                <span class="meta-item">${film.genre ? film.genre.split(',')[0] : ''}</span>
+                                <span class="meta-item">${film.langue_originale || 'N/A'}</span>
+                            </div>
+                            <div class="availability ${isAvailable ? '' : 'unavailable'}">
+                                ${isAvailable ? 
+                                    `${availableCopies} COPIE${availableCopies > 1 ? 'S' : ''} DISPONIBLE${availableCopies > 1 ? 'S' : ''}` : 
+                                    'INDISPONIBLE'
+                                }
+                            </div>
+                            <p style="color: #cccccc; line-height: 1.6;">${film.synopsis || 'Aucun synopsis disponible.'}</p>
                         </div>
                     </div>
+                    
+                    <div class="film-content">
+                        <div class="info-grid">
+                            <div class="info-section">
+                                <h3>INFORMATIONS TECHNIQUES</h3>
+                                <div class="info-item">
+                                    <span class="info-label">Réalisateur</span>
+                                    <span class="info-value">${film.realisateurs || 'Non spécifié'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Genre</span>
+                                    <span class="info-value">${film.genre || 'Non spécifié'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Année</span>
+                                    <span class="info-value">${film.annee_sortie || 'Non spécifié'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Langue</span>
+                                    <span class="info-value">${film.langue_originale || 'Non spécifié'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Pays</span>
+                                    <span class="info-value">${film.pays_productions || 'Non spécifié'}</span>
+                                </div>
+                            </div>
 
-                    <div class="info-section">
-                        <h3>DISTRIBUTION</h3>
-                        <div class="actors-list">
-                            ${actorsList}
-                            ${film.acteurs && film.acteurs.split(', ').length > 10 ? 
-                                '<div class="actor-item" style="text-align: center; color: #666;">... ET AUTRES</div>' : ''
+                            <div class="info-section">
+                                <h3>DISTRIBUTION</h3>
+                                <div class="actors-list">
+                                    ${actorsList}
+                                    ${film.acteurs && film.acteurs.split(', ').length > 10 ? 
+                                        '<div class="actor-item" style="text-align: center; color: #666;">... ET AUTRES</div>' : ''
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        ${film.trailer ? `
+                        <div class="trailer-section">
+                            <h3 style="color: #ffa500; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">BANDE-ANNONCE</h3>
+                            <div class="trailer-container">
+                                <iframe src="${film.trailer}" 
+                                        title="Bande-annonce de ${film.title}" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="actions">
+                            ${isAvailable ? 
+                                `<button class="btn btn-primary" onclick="louerFilm(${film.id})">
+                                    LOUER CE FILM
+                                </button>` :
+                                `<button class="btn btn-disabled" disabled>
+                                    INDISPONIBLE
+                                </button>`
                             }
+                            <a href="index.html" class="btn btn-secondary">
+                                RETOUR À L'ACCUEIL
+                            </a>
                         </div>
                     </div>
                 </div>
+            `;
+        }
 
-                ${film.trailer ? `
-                <div class="trailer-section">
-                    <h3 style="color: #ffa500; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">BANDE-ANNONCE</h3>
-                    <div class="trailer-container">
-                        <iframe src="${film.trailer}" 
-                                title="Bande-annonce de ${film.title}" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen>
-                        </iframe>
-                    </div>
-                </div>
-                ` : ''}
-
-                <div class="actions">
-                    ${isAvailable ? 
-                        `<button class="btn btn-primary" onclick="louerFilm(${film.id})">
-                            LOUER CE FILM
-                        </button>` :
-                        `<button class="btn btn-disabled" disabled>
-                            INDISPONIBLE
-                        </button>`
-                    }
-                    <a href="index.html" class="btn btn-secondary">
-                        RETOUR À L'ACCUEIL
-                    </a>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
+        // =============================================
+        // LOUER UN FILM
+        // =============================================
         async function louerFilm(filmId) {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             if (!confirm('Êtes-vous sûr de vouloir louer ce film ?')) {
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:3000/api/rentals/location', {
+                console.log('📤 Location du film:', filmId);
+                
+                const response = await fetch(`${API_URL}/rentals/location`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
-                    credentials: 'include',
                     body: JSON.stringify({ filmId: filmId })
                 });
 
-                const data = await response.json();
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
-                if (response.ok) {
-                    alert('Film loué avec succès !');
-                    loadFilmDetails();
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    alert('✅ Film loué avec succès !');
+                    loadFilmDetails(); // Recharger les détails
                 } else {
-                    alert(data.message || 'Erreur lors de la location');
+                    alert(result.message || 'Erreur lors de la location');
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('❌ Erreur:', error);
                 alert('Erreur lors de la location');
             }
         }
 
+        // =============================================
+        // AFFICHAGE DES ERREURS
+        // =============================================
         function showError(message) {
             const filmContent = document.getElementById('film-content');
             filmContent.innerHTML = `
@@ -539,17 +631,32 @@
             `;
         }
 
+        // =============================================
+        // DÉCONNEXION
+        // =============================================
         document.getElementById('logout-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            
             try {
-                await fetch('http://localhost:3000/api/auth/logout', {
-                    credentials: 'include'
-                });
+                if (token) {
+                    await fetch(`${API_URL}/auth/logout`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
             } catch (error) {
                 console.error('Erreur déconnexion:', error);
             } finally {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = 'login.html';
             }
         });
+
+        // Rendre la fonction disponible globalement
+        window.louerFilm = louerFilm;
     </script>
 </body>
 </html>
