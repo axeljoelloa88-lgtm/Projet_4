@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - Lofilm</title>
     <style>
+        /* TES STYLES EXISTANTS - GARDE LES MÊMES */
         * {
             margin: 0;
             padding: 0;
@@ -138,14 +139,13 @@
             font-weight: 600;
             display: none;
         }
+        .alert-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: #000;
+        }
         .alert-error {
             background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
             color: #000;
-        }
-        .loading {
-            text-align: center;
-            padding: 1rem;
-            color: #666;
         }
     </style>
 </head>
@@ -153,7 +153,7 @@
     <div class="login-container">
         <div class="logo">
             <h1>LOFILM</h1>
-            <p>Votre plateforme de location de film </p>
+            <p>Votre plateforme de location de films</p>
         </div>
         
         <div class="login-card">
@@ -189,45 +189,119 @@
     </div>
 
     <script>
+        // =============================================
+        // CONFIGURATION UNIQUEMENT POUR RENDER
+        // =============================================
+        const API_URL = 'https://projet-4-4qcd.onrender.com/api';
+        
+        console.log('🔗 API URL (production):', API_URL);
+
+        // =============================================
+        // VÉRIFICATION SI DÉJÀ CONNECTÉ
+        // =============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Optionnel : vérifier si le token est toujours valide
+                console.log('Utilisateur déjà connecté, redirection vers index.html');
+                window.location.href = 'index.html';
+            }
+        });
+
+        // =============================================
+        // GESTION DE LA CONNEXION
+        // =============================================
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const remember = document.querySelector('input[name="remember"]').checked;
             const alert = document.getElementById('alert');
 
+            // Validation rapide
+            if (!email || !password) {
+                showAlert('Veuillez remplir tous les champs', 'error', alert);
+                return;
+            }
+
+            // Afficher un message de chargement
+            showAlert('Connexion en cours...', 'info', alert);
+            const submitBtn = document.querySelector('.btn-primary');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CHARGEMENT...';
+
             try {
-                const response = await fetch('http://localhost:3000/api/auth/login', {
+                console.log('📤 Tentative de connexion pour:', email);
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email, password }),
-                    credentials: 'include'
+                    body: JSON.stringify({ email, password })
+                    // PAS DE credentials: 'include' - on utilise JWT !
                 });
 
                 const data = await response.json();
+                console.log('📥 Réponse brute:', response.status, data);
 
                 if (response.ok && data.success) {
-                    window.location.href = 'index.html';
+                    // ✅ STOCKER LE TOKEN DANS LOCALSTORAGE
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Option "Se souvenir de moi" - le localStorage est persistant par défaut
+                    
+                    showAlert('✅ Connexion réussie ! Redirection...', 'success', alert);
+                    
+                    // Redirection vers l'accueil
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
                 } else {
-                    showAlert(data.message || "Erreur lors de la connexion", 'error', alert);
+                    // Gestion des erreurs
+                    const errorMessage = data.message || "Email ou mot de passe incorrect";
+                    showAlert(errorMessage, 'error', alert);
+                    
+                    // Réactiver le bouton
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'SE CONNECTER';
                 }
             } catch (error) {
-                console.error('Erreur lors de la connexion:', error);
-                showAlert('Erreur lors de la connexion', 'error', alert);
+                console.error('❌ Erreur réseau détaillée:', error);
+                showAlert('Erreur de connexion au serveur. Vérifiez votre connexion.', 'error', alert);
+                
+                // Réactiver le bouton
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'SE CONNECTER';
             }
         });
 
+        // =============================================
+        // FONCTION D'AFFICHAGE DES ALERTES
+        // =============================================
         function showAlert(message, type, element) {
             element.textContent = message;
             element.className = 'alert';
-            element.classList.add('alert-error');
+            
+            if (type === 'success') {
+                element.classList.add('alert-success');
+            } else if (type === 'error') {
+                element.classList.add('alert-error');
+            } else {
+                element.style.background = '#333';
+                element.style.color = '#ffa500';
+            }
+            
             element.style.display = 'block';
 
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
+            // L'alerte disparaît après 5 secondes (sauf pour les erreurs)
+            if (type !== 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
         }
     </script>
 </body>
