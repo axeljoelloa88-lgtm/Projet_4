@@ -51,11 +51,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// =============================================
-// PROXY POUR LES IMAGES TMDB
-// =============================================
-const fetch = require('node-fetch'); // npm install node-fetch@2
-
+// PROXY POUR LES IMAGES TMDB - Version avec fetch natif
 app.get('/api/proxy-image', async (req, res) => {
     const imageUrl = req.query.url;
     
@@ -63,7 +59,6 @@ app.get('/api/proxy-image', async (req, res) => {
         return res.status(400).json({ error: 'URL manquante' });
     }
 
-    // Vérifier que c'est bien une URL TMDB
     if (!imageUrl.includes('themoviedb.org')) {
         return res.status(400).json({ error: 'URL non autorisée' });
     }
@@ -82,16 +77,15 @@ app.get('/api/proxy-image', async (req, res) => {
             throw new Error(`HTTP ${response.status}`);
         }
 
-        const buffer = await response.buffer();
+        const buffer = Buffer.from(await response.arrayBuffer());
         const contentType = response.headers.get('content-type') || 'image/jpeg';
         
         res.set('Content-Type', contentType);
-        res.set('Cache-Control', 'public, max-age=86400'); // Cache 24h
+        res.set('Cache-Control', 'public, max-age=86400');
         res.send(buffer);
         
     } catch (error) {
         console.error('❌ Proxy image error:', error);
-        // Renvoyer une image par défaut ou une erreur 404
         res.status(500).json({ error: 'Erreur proxy image' });
     }
 });
