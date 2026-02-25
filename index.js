@@ -1,34 +1,21 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-// const session = require('express-session'); // <-- À SUPPRIMER
 const app = express();
+const path = require('path');
+const cors = require('cors');
+const jwt = require('jsonwebtoken'); // <-- AJOUTÉ
 
 app.use(cookieParser());
 
 // Pour utiliser le body pour les requêtes JSON
 app.use(express.json());
 
-// ✅ PLUS BESOIN DE SESSION - ON SUPPRIME TOUT CE BLOC :
-/*
-app.use(session({
-        secret: 'min_max',
-        resave: false,
-        saveUninitialized: true,
-        cookie: {
-            secure: false,
-        }
-}));
-*/
-
-const path = require('path');
 const cors = require('cors');
 
 // Configurer CORS pour accepter les requêtes depuis 127.0.0.1:5500
 app.use(cors({
     origin: 'http://127.0.0.1:5500',
-    credentials: true, // On garde si tu utilises cookies pour autre chose
-    // Note: Avec JWT, on n'a plus besoin de credentials=true si on utilise localStorage
-    // Mais ça ne gêne pas de le laisser
+    credentials: true
 }));
 
 // Middleware pour parser les données du formulaire
@@ -36,6 +23,37 @@ app.use(express.urlencoded({ extended: true }));
 
 // Servir les fichiers statiques du dossier Vue
 app.use(express.static(path.join(__dirname, 'Vue')));
+
+// =====================================================
+// MIDDLEWARE JWT (directement dans index.js)
+// =====================================================
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
+    
+    if (!token) {
+        return res.status(401).json({ 
+            success: false, 
+            message: "Token manquant - Authentification requise" 
+        });
+    }
+    
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Token invalide ou expiré" 
+            });
+        }
+        
+        req.user = user; // Attacher l'utilisateur à la requête
+        next();
+    });
+}
+
+// Rendre le middleware disponible pour les controllers
+module.exports.authenticateToken = authenticateToken;
+// =====================================================
 
 // Importation des routes
 const AuthentificationRoutes = require('./Controller/AuthentificationController');
@@ -50,7 +68,7 @@ app.use('/api/rentals', LocationRoutes);
 app.use('/api/profil', ProfilRoutes);
 
 // Démarrage du serveur sur le port spécifié
-const PORT = process.env.PORT || 3000; // ✅ Utilise la variable d'environnement PORT
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);

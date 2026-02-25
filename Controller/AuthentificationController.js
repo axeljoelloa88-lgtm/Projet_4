@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const AuthentificationDAO = require('../Model/AuthentificationDAO');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); // <-- AJOUTER
+const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('../index'); // <-- IMPORT DU MIDDLEWARE
 
 /**
- * Enregistre un nouvel utilisateur s’il n'existe pas déjà.
+ * Enregistre un nouvel utilisateur s'il n'existe pas déjà.
  */
 router.post('/register', async (req, res) => {
     const user = req.body;
@@ -26,7 +27,6 @@ router.post('/register', async (req, res) => {
             if (err) {
                 return res.status(500).send('Erreur serveur');
             }
-
             res.json(results);
         });
 
@@ -48,24 +48,24 @@ router.post('/login', (req, res) => {
         }
         
         if (dbUser) {
-            // ✅ CRÉATION DU TOKEN JWT (à la place de la session)
+            // CRÉATION DU TOKEN JWT
             const token = jwt.sign(
                 { 
                     id: dbUser.id,
                     email: dbUser.email,
                     name: dbUser.name
                 },
-                process.env.JWT_SECRET, // Depuis .env
-                { expiresIn: '7d' }      // Token valable 7 jours
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
             );
             
             console.log("Token JWT créé pour :", dbUser.email);
 
-            // ✅ Réponse avec le token (pas de session !)
+            // Réponse avec le token
             res.status(200).json({ 
                 success: true, 
                 message: "Connexion réussie",
-                token: token,           // <-- LE CLIENT DEVRA STOCKER CE TOKEN
+                token: token,
                 user: {
                     id: dbUser.id,
                     email: dbUser.email,
@@ -79,19 +79,14 @@ router.post('/login', (req, res) => {
 });
 
 /**
- * Déconnexion - Côté serveur, on ne fait rien avec JWT
- * (c'est le client qui supprime le token)
+ * Déconnexion
  */
 router.get('/logout', (req, res) => {
-    // Avec JWT, pas besoin de détruire de session côté serveur !
-    // Le client supprimera le token de son localStorage
-    
     AuthentificationDAO.Logout((err, isValid) => {
         if (err) {
             return res.status(500).send("Erreur serveur");
         }
-        
-        console.log("Déconnexion réussie (côté serveur)");
+        console.log("Déconnexion réussie");
         return res.status(200).json({ 
             success: true, 
             message: "Déconnexion réussie" 
