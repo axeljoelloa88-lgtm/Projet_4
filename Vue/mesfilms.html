@@ -69,13 +69,11 @@
             background: #ffb732;
             transform: translateY(-1px);
         }
-
         .container {
             padding: 2rem 4%;
             max-width: 1200px;
             margin: 0 auto;
         }
-
         .page-header {
             margin-bottom: 2rem;
         }
@@ -91,7 +89,6 @@
             font-size: 1.1rem;
             font-weight: 300;
         }
-
         .rentals-section {
             margin-top: 2rem;
         }
@@ -105,13 +102,11 @@
             padding-bottom: 0.5rem;
             display: inline-block;
         }
-
         .rentals-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.5rem;
         }
-
         .rental-card {
             background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
             border-radius: 8px;
@@ -129,7 +124,6 @@
             opacity: 0.7;
             border-color: #666;
         }
-
         .rental-header {
             display: flex;
             justify-content: space-between;
@@ -158,7 +152,6 @@
             background: #666;
             color: #ccc;
         }
-
         .rental-dates {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -184,7 +177,6 @@
             font-size: 0.9rem;
             font-weight: 600;
         }
-
         .rental-actions {
             display: flex;
             gap: 1rem;
@@ -215,7 +207,6 @@
             color: #666;
             cursor: not-allowed;
         }
-
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -247,7 +238,6 @@
             background: #ffb732;
             transform: translateY(-2px);
         }
-
         .loading {
             text-align: center;
             padding: 3rem;
@@ -263,7 +253,6 @@
             text-align: center;
             font-weight: 600;
         }
-
         .duration-info {
             position: absolute;
             top: 1rem;
@@ -275,7 +264,6 @@
             font-size: 0.7rem;
             font-weight: 600;
         }
-
         @media (max-width: 768px) {
             .rentals-grid {
                 grid-template-columns: 1fr;
@@ -312,32 +300,103 @@
     </div>
 
     <script>
+        // =============================================
+        // CONFIGURATION UNIQUEMENT POUR RENDER
+        // =============================================
+        const API_URL = 'https://projet-4-4qcd.onrender.com/api';
+        
+        console.log('🚀 Page mesfilms.html chargée');
+        console.log('🔗 API URL:', API_URL);
+        
+        // =============================================
+        // VÉRIFICATION AU CHARGEMENT
+        // =============================================
         document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            
+            console.log('📦 Token:', token ? '✅ PRÉSENT' : '❌ ABSENT');
+            
+            if (!token) {
+                console.log('❌ Pas de token, redirection vers login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
             loadMesFilms();
         });
 
+        // =============================================
+        // CHARGEMENT DES FILMS LOUÉS
+        // =============================================
         async function loadMesFilms() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             try {
-                const response = await fetch('http://localhost:3000/api/profil/mesfilms', {
-                    credentials: 'include'
+                console.log('📤 Tentative de chargement des locations...');
+                console.log('📤 URL:', `${API_URL}/profil/mesfilms`);
+                
+                // Test de connexion simple
+                try {
+                    const testResponse = await fetch(API_URL.replace('/api', ''), {
+                        method: 'HEAD',
+                        mode: 'no-cors'
+                    });
+                    console.log('📥 Test serveur:', testResponse.type);
+                } catch (e) {
+                    console.log('⚠️ Test serveur échoué mais on continue');
+                }
+                
+                const response = await fetch(`${API_URL}/profil/mesfilms`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
                 });
 
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        displayMesFilms(result.data);
-                    } else {
-                        throw new Error(result.message);
-                    }
-                } else {
-                    throw new Error('Erreur lors du chargement de vos films');
+                console.log('📥 Statut réponse:', response.status);
+                console.log('📥 Headers réponse:', [...response.headers.entries()]);
+
+                if (response.status === 401 || response.status === 403) {
+                    console.log('❌ Token invalide, nettoyage...');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
                 }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('📥 Données reçues:', result);
+                
+                if (result.success) {
+                    displayMesFilms(result.data);
+                } else {
+                    throw new Error(result.message || 'Erreur inconnue');
+                }
+                
             } catch (error) {
-                console.error('Erreur:', error);
-                showError('Erreur lors du chargement de vos films: ' + error.message);
+                console.error('❌ Erreur détaillée:', error);
+                console.error('❌ Message:', error.message);
+                console.error('❌ Stack:', error.stack);
+                
+                // Afficher une erreur plus détaillée
+                showError(`Erreur de connexion: ${error.message}. Vérifiez que le serveur est accessible.`);
             }
         }
 
+        // =============================================
+        // AFFICHAGE DES FILMS LOUÉS
+        // =============================================
         function displayMesFilms(rentals) {
             const container = document.getElementById('rentals-content');
             
@@ -365,7 +424,7 @@
                         ${!isReturned ? `<div class="duration-info">${durationDays} JOUR${durationDays > 1 ? 'S' : ''}</div>` : ''}
                         
                         <div class="rental-header">
-                            <h3 class="film-title">${rental.film_title}</h3>
+                            <h3 class="film-title">${rental.film_title || 'Film'}</h3>
                             <span class="rental-status ${isReturned ? 'status-returned' : 'status-active'}">
                                 ${isReturned ? 'RETOURNÉ' : 'EN COURS'}
                             </span>
@@ -411,9 +470,14 @@
             container.innerHTML = html;
         }
 
+        // =============================================
+        // RETOURNER UN FILM
+        // =============================================
         async function retournerFilm(filmId) {
-            if (!filmId) {
-                alert('Erreur: ID du film non disponible');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
                 return;
             }
 
@@ -422,45 +486,82 @@
             }
 
             try {
-                const response = await fetch('http://localhost:3000/api/rentals/retour', {
+                console.log('📤 Retour du film:', filmId);
+                
+                const response = await fetch(`${API_URL}/rentals/retour`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
-                    credentials: 'include',
                     body: JSON.stringify({ filmId: filmId })
                 });
 
+                console.log('📥 Statut retour:', response.status);
+
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
                 const result = await response.json();
+                console.log('📥 Réponse retour:', result);
 
                 if (response.ok && result.success) {
-                    alert('Film retourné avec succès !');
+                    alert('✅ Film retourné avec succès !');
                     loadMesFilms();
                 } else {
-                    alert(result.message || 'Erreur lors du retour du film');
+                    alert(result.message || 'Erreur lors du retour');
                 }
             } catch (error) {
-                console.error('Erreur:', error);
-                alert('Erreur lors du retour du film');
+                console.error('❌ Erreur retour:', error);
+                alert('Erreur lors du retour: ' + error.message);
             }
         }
 
+        // =============================================
+        // AFFICHAGE DES ERREURS
+        // =============================================
         function showError(message) {
             const container = document.getElementById('rentals-content');
-            container.innerHTML = `<div class="error">${message}</div>`;
+            container.innerHTML = `
+                <div class="error">
+                    <strong>❌ ERREUR</strong><br>
+                    ${message}<br><br>
+                    <button class="btn btn-primary" onclick="location.reload()">RECHARGER</button>
+                    <button class="btn btn-secondary" onclick="window.location.href='index.html'">ACCUEIL</button>
+                </div>
+            `;
         }
 
+        // =============================================
+        // DÉCONNEXION
+        // =============================================
         document.getElementById('logout-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            
             try {
-                await fetch('http://localhost:3000/api/auth/logout', {
-                    credentials: 'include'
-                });
+                if (token) {
+                    await fetch(`${API_URL}/auth/logout`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
             } catch (error) {
-                console.error('Erreur déconnexion:', error);
+                console.error('❌ Erreur déconnexion:', error);
             } finally {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = 'login.html';
             }
         });
+
+        // Rendre la fonction disponible globalement
+        window.retournerFilm = retournerFilm;
     </script>
 </body>
 </html>
