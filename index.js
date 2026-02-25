@@ -51,6 +51,51 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// =============================================
+// PROXY POUR LES IMAGES TMDB
+// =============================================
+const fetch = require('node-fetch'); // npm install node-fetch@2
+
+app.get('/api/proxy-image', async (req, res) => {
+    const imageUrl = req.query.url;
+    
+    if (!imageUrl) {
+        return res.status(400).json({ error: 'URL manquante' });
+    }
+
+    // Vérifier que c'est bien une URL TMDB
+    if (!imageUrl.includes('themoviedb.org')) {
+        return res.status(400).json({ error: 'URL non autorisée' });
+    }
+
+    try {
+        console.log('📸 Proxy image:', imageUrl.substring(0, 50) + '...');
+        
+        const response = await fetch(imageUrl, {
+            headers: {
+                'User-Agent': 'Lofilm-App/1.0',
+                'Referer': 'https://projet-4-4qcd.onrender.com'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const buffer = await response.buffer();
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        
+        res.set('Content-Type', contentType);
+        res.set('Cache-Control', 'public, max-age=86400'); // Cache 24h
+        res.send(buffer);
+        
+    } catch (error) {
+        console.error('❌ Proxy image error:', error);
+        // Renvoyer une image par défaut ou une erreur 404
+        res.status(500).json({ error: 'Erreur proxy image' });
+    }
+});
+
 // Rendre le middleware disponible pour les controllers
 module.exports.authenticateToken = authenticateToken;
 // =====================================================

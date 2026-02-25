@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>Lofilm - Films et Séries</title>
     <style>
-        /* TES STYLES EXISTANTS - GARDE LES MÊMES */
+        /* TES STYLES EXISTANTS */
         * {
             margin: 0;
             padding: 0;
@@ -286,14 +285,8 @@
         .film-image {
             width: 100%;
             height: 320px;
-            background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-size: 3rem;
-            font-weight: bold;
             position: relative;
+            overflow: hidden;
         }
         .film-image img {
             width: 100%;
@@ -316,6 +309,7 @@
             display: flex;
             align-items: flex-end;
             padding: 1.2rem;
+            z-index: 2;
         }
         .film-card:hover .film-overlay {
             opacity: 1;
@@ -343,13 +337,13 @@
         .film-actions {
             display: flex;
             gap: 0.6rem;
-            margin-top: 1rem;
+            width: 100%;
         }
         .btn-small {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.8rem;
             border: none;
             border-radius: 4px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s;
             flex: 1;
@@ -357,6 +351,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            text-decoration: none;
         }
         .btn-details {
             background: rgba(255, 255, 255, 0.1);
@@ -387,7 +382,7 @@
             color: #fff;
             padding: 0.4rem 0.8rem;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -516,19 +511,15 @@
         // =============================================
         const API_URL = 'https://projet-4-4qcd.onrender.com/api';
         
-        // Variables globales
-        let currentUser = null;
-        let allGenres = [];
-
-        // =============================================
-        // LOGS DE DÉBOGAGE - À GARDER
-        // =============================================
         console.log('🚀 Page index.html chargée');
         console.log('🔗 API URL:', API_URL);
         
         const token = localStorage.getItem('token');
-        console.log('📦 Token dans localStorage:', token ? '✅ PRÉSENT' : '❌ ABSENT');
-        console.log('📦 Longueur du token:', token ? token.length : 0);
+        console.log('📦 Token:', token ? '✅ PRÉSENT' : '❌ ABSENT');
+
+        // Variables globales
+        let currentUser = null;
+        let allGenres = [];
 
         // =============================================
         // VÉRIFICATION DU TOKEN AU CHARGEMENT
@@ -583,7 +574,6 @@
 
                 console.log('📥 Statut réponse /profil:', response.status);
 
-                // Token invalide ou expiré
                 if (response.status === 401 || response.status === 403) {
                     console.log('❌ Token invalide ou expiré, nettoyage...');
                     localStorage.removeItem('token');
@@ -610,7 +600,6 @@
                 }
             } catch (error) {
                 console.error('❌ Erreur réseau checkAuth:', error);
-                // En cas d'erreur réseau, on reste sur la page mais on affiche une erreur
                 showError('Erreur de connexion au serveur. Rafraîchissez la page.');
             }
         }
@@ -769,17 +758,26 @@
                     `${availableCopies} COPIE${availableCopies > 1 ? 'S' : ''}` : 
                     'INDISPONIBLE';
 
-                // Image du film
+                // Fallback image
+                const fallbackImage = `<div class="film-image" style="background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #000; margin-bottom: 0.5rem;">LOFILM</div>
+                    <div style="color: #000; font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">
+                        ${film.genre ? film.genre.split(',')[0] : 'FILM'}
+                    </div>
+                </div>`;
+
+                // Image avec proxy TMDB
                 let imageContent = '';
                 if (film.imgPath && film.imgPath.includes('themoviedb.org')) {
-                    imageContent = `<img src="${film.imgPath}" alt="${film.title}" style="width: 100%; height: 320px; object-fit: cover;">`;
-                } else {
-                    imageContent = `<div class="film-image" style="background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                        <div style="font-size: 1.8rem; font-weight: bold; color: #000; margin-bottom: 0.5rem;">LOFILM</div>
-                        <div style="color: #000; font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">
-                            ${film.genre ? film.genre.split(',')[0] : 'FILM'}
+                    imageContent = `
+                        <div class="film-image">
+                            <img src="${API_URL}/proxy-image?url=${encodeURIComponent(film.imgPath)}" 
+                                 alt="${film.title}" 
+                                 onerror="this.onerror=null; this.style.display='none'; this.parentNode.innerHTML='${fallbackImage.replace(/'/g, "\\'").replace(/\n/g, '')}'">
                         </div>
-                    </div>`;
+                    `;
+                } else {
+                    imageContent = fallbackImage;
                 }
 
                 filmCard.innerHTML = `
@@ -887,7 +885,7 @@
 
                 if (response.ok && result.success) {
                     alert('✅ Film loué avec succès !');
-                    loadFilms(); // Recharger la liste
+                    loadFilms();
                 } else {
                     alert(result.message || 'Erreur lors de la location');
                 }
