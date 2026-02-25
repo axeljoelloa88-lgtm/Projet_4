@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lofilm - Films et Séries</title>
     <style>
+        /* TES STYLES EXISTANTS - GARDE LES MÊMES */
         * {
             margin: 0;
             padding: 0;
@@ -78,8 +79,6 @@
             background: #ffb732;
             transform: translateY(-1px);
         }
-
-        /* Hero Section */
         .hero {
             height: 80vh;
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
@@ -95,33 +94,6 @@
             max-width: 600px;
             z-index: 2;
         }
-
-        .film-image {
-        width: 100%;
-        height: 320px;
-        position: relative;
-        overflow: hidden;
-        }
-
-        .film-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .film-card:hover .film-image img {
-            transform: scale(1.05);
-        }
-
-        .film-poster {
-            width: 100%;
-            height: 450px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #ffa500;
-        }
-
         .hero-title {
             font-size: 3.5rem;
             font-weight: 800;
@@ -173,16 +145,12 @@
             background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.5);
         }
-
-        /* Main Content */
         .main-content {
             padding: 2rem 4%;
             margin-top: -100px;
             position: relative;
             z-index: 3;
         }
-
-        /* User Info */
         .user-info {
             background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
             padding: 1.5rem;
@@ -198,8 +166,6 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-
-        /* Search Section */
         .search-section {
             background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
             padding: 2rem;
@@ -283,8 +249,6 @@
             border-color: #ffa500;
             color: #ffa500;
         }
-
-        /* Films Grid */
         .films-section {
             margin-top: 3rem;
         }
@@ -329,6 +293,15 @@
             font-size: 3rem;
             font-weight: bold;
             position: relative;
+        }
+        .film-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .film-card:hover .film-image img {
+            transform: scale(1.05);
         }
         .film-overlay {
             position: absolute;
@@ -417,6 +390,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            z-index: 5;
         }
         .available {
             background: #ffa500;
@@ -426,8 +400,6 @@
             background: #666;
             color: #ccc;
         }
-
-        /* Loading and Error States */
         .loading {
             text-align: center;
             padding: 3rem;
@@ -444,8 +416,6 @@
             text-align: center;
             font-weight: 600;
         }
-
-        /* Search Results Info */
         .search-results-info {
             background: linear-gradient(135deg, rgba(255, 165, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%);
             border: 1px solid rgba(255, 165, 0, 0.3);
@@ -455,8 +425,6 @@
             color: #ffa500;
             font-weight: 500;
         }
-
-        /* Responsive */
         @media (max-width: 768px) {
             .navbar {
                 padding: 1rem;
@@ -480,7 +448,6 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <a href="index.html" class="logo">LOFILM</a>
         <div class="nav-links">
@@ -491,31 +458,23 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
             <h1 class="hero-title">BIENVENUE SUR LOFILM</h1>
             <p class="hero-subtitle">Des milliers de films à découvrir et à louer</p>
             <div class="hero-actions">
-                <a href="#films" class="btn btn-primary">
-                    EXPLORER LES FILMS
-                </a>
-                <a href="mesfilms.html" class="btn btn-secondary">
-                    MES LOCATIONS
-                </a>
+                <a href="#films" class="btn btn-primary">EXPLORER LES FILMS</a>
+                <a href="mesfilms.html" class="btn btn-secondary">MES LOCATIONS</a>
             </div>
         </div>
     </section>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- User Info -->
         <div class="user-info" id="user-info">
             <h3>MON PROFIL</h3>
             <div id="user-details">Chargement...</div>
         </div>
 
-        <!-- Search Section -->
         <section class="search-section">
             <h3>RECHERCHER UN FILM</h3>
             <div class="search-filters">
@@ -540,10 +499,8 @@
             </div>
         </section>
 
-        <!-- Search Results Info -->
         <div id="search-results-info"></div>
 
-        <!-- Films Section -->
         <section class="films-section" id="films">
             <h2 class="section-title">FILMS DISPONIBLES</h2>
             <div class="films-grid" id="films-container">
@@ -553,9 +510,42 @@
     </main>
 
     <script>
+        // =============================================
+        // CONFIGURATION UNIQUEMENT POUR RENDER
+        // =============================================
+        const API_URL = 'https://projet-4-4qcd.onrender.com/api';
+        
         // Variables globales
         let currentUser = null;
         let allGenres = [];
+
+        // =============================================
+        // LOGS DE DÉBOGAGE - À GARDER
+        // =============================================
+        console.log('🚀 Page index.html chargée');
+        console.log('🔗 API URL:', API_URL);
+        
+        const token = localStorage.getItem('token');
+        console.log('📦 Token dans localStorage:', token ? '✅ PRÉSENT' : '❌ ABSENT');
+        console.log('📦 Longueur du token:', token ? token.length : 0);
+
+        // =============================================
+        // VÉRIFICATION DU TOKEN AU CHARGEMENT
+        // =============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 DOM chargé, vérification du token...');
+            
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                console.log('❌ Aucun token trouvé, redirection vers login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            console.log('✅ Token présent, chargement des données...');
+            checkAuth();
+        });
 
         // Scroll effect for navbar
         window.addEventListener('scroll', function() {
@@ -567,21 +557,46 @@
             }
         });
 
-        // Chargement initial
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuth();
-        });
-
-        // Vérifier l'authentification et charger les données
+        // =============================================
+        // VÉRIFIER L'AUTHENTIFICATION
+        // =============================================
         async function checkAuth() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                console.log('❌ checkAuth: token absent');
+                window.location.href = 'login.html';
+                return;
+            }
+
             try {
-                const response = await fetch('http://localhost:3000/api/profil', {
-                    credentials: 'include'
+                console.log('📤 Vérification du token auprès de /profil...');
+                
+                const response = await fetch(`${API_URL}/profil`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
+
+                console.log('📥 Statut réponse /profil:', response.status);
+
+                // Token invalide ou expiré
+                if (response.status === 401 || response.status === 403) {
+                    console.log('❌ Token invalide ou expiré, nettoyage...');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('📥 Données profil:', result);
+                    
                     if (result.success) {
+                        console.log('✅ Token valide, chargement des données');
                         currentUser = result.data;
                         displayUserInfo(currentUser);
                         loadGenres();
@@ -590,34 +605,49 @@
                         throw new Error(result.message);
                     }
                 } else {
-                    throw new Error('Non authentifié');
+                    throw new Error('Erreur de vérification');
                 }
             } catch (error) {
-                console.error('Erreur auth:', error);
-                window.location.href = 'login.html';
+                console.error('❌ Erreur réseau checkAuth:', error);
+                // En cas d'erreur réseau, on reste sur la page mais on affiche une erreur
+                showError('Erreur de connexion au serveur. Rafraîchissez la page.');
             }
         }
 
-        // Charger les genres
+        // =============================================
+        // CHARGER LES GENRES
+        // =============================================
         async function loadGenres() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
             try {
-                const response = await fetch('http://localhost:3000/api/films/metadata/genres', {
-                    credentials: 'include'
+                console.log('📤 Chargement des genres...');
+                
+                const response = await fetch(`${API_URL}/films/metadata/genres`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success) {
                         allGenres = result.data;
+                        console.log('✅ Genres chargés:', allGenres.length);
                         populateGenreDropdown();
                     }
                 }
             } catch (error) {
-                console.error('Erreur chargement genres:', error);
+                console.error('❌ Erreur chargement genres:', error);
             }
         }
 
-        // Remplir la liste déroulante des genres
+        // =============================================
+        // REMPLIR LA LISTE DES GENRES
+        // =============================================
         function populateGenreDropdown() {
             const genreSelect = document.getElementById('search-genre');
             
@@ -629,7 +659,9 @@
             });
         }
 
-        // Afficher les informations utilisateur
+        // =============================================
+        // AFFICHER LES INFOS UTILISATEUR
+        // =============================================
         function displayUserInfo(user) {
             const userDetails = document.getElementById('user-details');
             if (userDetails && user) {
@@ -640,10 +672,15 @@
             }
         }
 
-        // Charger les films avec filtres
+        // =============================================
+        // CHARGER LES FILMS
+        // =============================================
         async function loadFilms(filters = {}) {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
             try {
-                let url = 'http://localhost:3000/api/films';
+                let url = `${API_URL}/films`;
                 const params = new URLSearchParams();
                 
                 if (filters.title) params.append('title', filters.title);
@@ -654,14 +691,21 @@
                     url += '?' + params.toString();
                 }
 
+                console.log('📤 Chargement des films depuis:', url);
+
                 const response = await fetch(url, {
-                    credentials: 'include'
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.ok) {
                     const result = await response.json();
                     
                     if (result.success && result.data) {
+                        console.log('✅ Films chargés:', result.data.length);
                         displayFilms(result.data);
                         updateSearchResultsInfo(result.data.length, filters);
                     } else {
@@ -671,12 +715,14 @@
                     throw new Error('Erreur HTTP: ' + response.status);
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('❌ Erreur chargement films:', error);
                 showError('Erreur lors du chargement des films: ' + error.message);
             }
         }
 
-        // Afficher les informations de recherche
+        // =============================================
+        // METTRE À JOUR LES INFOS DE RECHERCHE
+        // =============================================
         function updateSearchResultsInfo(count, filters) {
             const infoElement = document.getElementById('search-results-info');
             const hasFilters = Object.keys(filters).length > 0;
@@ -698,12 +744,14 @@
             }
         }
 
-        // Remplacer la fonction getFilmImage ou modifier displayFilms
+        // =============================================
+        // AFFICHER LES FILMS
+        // =============================================
         function displayFilms(films) {
             const container = document.getElementById('films-container');
             
             if (!films || films.length === 0) {
-                container.innerHTML = '<div class="loading">AUCUN FILM TROUVÉ AVEC CES CRITÈRES</div>';
+                container.innerHTML = '<div class="loading">AUCUN FILM TROUVÉ</div>';
                 return;
             }
 
@@ -720,19 +768,18 @@
                     `${availableCopies} COPIE${availableCopies > 1 ? 'S' : ''}` : 
                     'INDISPONIBLE';
 
-                // NOUVELLE SECTION IMAGE AVEC TMDB
-                const imageContent = film.imgPath && film.imgPath.includes('themoviedb.org') ? 
-                    `<img src="${film.imgPath}" 
-                        alt="${film.title}" 
-                        class="film-image"
-                        style="width: 100%; height: 100%; object-fit: cover;"
-                        onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDIwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZmZhNTAwIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCI+TE9GSUxNPC90ZXh0Pgo8dGV4dCB4PSIxMDAiIHk9IjE4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgZm9udC13ZWlnaHQ9IjYwMCI+JHtmaWxtLmdlbnJlID8gZmlsbS5nZW5yZS5zcGxpdCgnLCcpWzBdIDogJ0ZJTE0nfTwvdGV4dD4KPC9zdmc+'">` :
-                    `<div class="film-image" style="background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                // Image du film
+                let imageContent = '';
+                if (film.imgPath && film.imgPath.includes('themoviedb.org')) {
+                    imageContent = `<img src="${film.imgPath}" alt="${film.title}" style="width: 100%; height: 320px; object-fit: cover;">`;
+                } else {
+                    imageContent = `<div class="film-image" style="background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%); display: flex; align-items: center; justify-content: center; flex-direction: column;">
                         <div style="font-size: 1.8rem; font-weight: bold; color: #000; margin-bottom: 0.5rem;">LOFILM</div>
                         <div style="color: #000; font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">
                             ${film.genre ? film.genre.split(',')[0] : 'FILM'}
                         </div>
                     </div>`;
+                }
 
                 filmCard.innerHTML = `
                     ${imageContent}
@@ -766,7 +813,10 @@
                 container.appendChild(filmCard);
             });
         }
-        // Rechercher des films
+
+        // =============================================
+        // RECHERCHER DES FILMS
+        // =============================================
         function searchFilms() {
             const filters = {
                 title: document.getElementById('search-title').value,
@@ -781,6 +831,9 @@
             loadFilms(filters);
         }
 
+        // =============================================
+        // EFFACER LA RECHERCHE
+        // =============================================
         function clearSearch() {
             document.getElementById('search-title').value = '';
             document.getElementById('search-name').value = '';
@@ -788,59 +841,98 @@
             loadFilms();
         }
 
-        // Voir les détails d'un film
+        // =============================================
+        // VOIR LES DÉTAILS D'UN FILM
+        // =============================================
         function viewFilmDetails(filmId) {
             window.location.href = `film-details.html?id=${filmId}`;
         }
 
-        // Louer un film
+        // =============================================
+        // LOUER UN FILM
+        // =============================================
         async function louerFilm(filmId) {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             if (!confirm('Êtes-vous sûr de vouloir louer ce film ?')) {
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:3000/api/rentals/location', {
+                console.log('📤 Location du film:', filmId);
+                
+                const response = await fetch(`${API_URL}/rentals/location`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
-                    credentials: 'include',
                     body: JSON.stringify({ filmId: filmId })
                 });
+
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                    return;
+                }
 
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert('Film loué avec succès !');
-                    loadFilms();
+                    alert('✅ Film loué avec succès !');
+                    loadFilms(); // Recharger la liste
                 } else {
                     alert(result.message || 'Erreur lors de la location');
                 }
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('❌ Erreur location:', error);
                 alert('Erreur lors de la location');
             }
         }
 
-        // Afficher une erreur
+        // =============================================
+        // AFFICHER UNE ERREUR
+        // =============================================
         function showError(message) {
             const container = document.getElementById('films-container');
             container.innerHTML = `<div class="error">${message}</div>`;
         }
 
-        // Déconnexion
+        // =============================================
+        // DÉCONNEXION
+        // =============================================
         document.getElementById('logout-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            
             try {
-                await fetch('http://localhost:3000/api/auth/logout', {
-                    credentials: 'include'
-                });
+                if (token) {
+                    await fetch(`${API_URL}/auth/logout`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
             } catch (error) {
                 console.error('Erreur déconnexion:', error);
             } finally {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = 'login.html';
             }
         });
+
+        // Rendre les fonctions disponibles globalement
+        window.searchFilms = searchFilms;
+        window.clearSearch = clearSearch;
+        window.viewFilmDetails = viewFilmDetails;
+        window.louerFilm = louerFilm;
     </script>
 </body>
 </html>
