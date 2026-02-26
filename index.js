@@ -10,19 +10,24 @@ app.use(cookieParser());
 // Pour utiliser le body pour les requêtes JSON
 app.use(express.json());
 
-// SUPPRIME CETTE LIGNE : const cors = require('cors');  // ← À ENLEVER !
+
+const allowedOrigins = ["https://projet-4-4qcd.onrender.com", "https://projet-4-frontend.onrender.com"].filter(Boolean);
 
 // Configurer CORS pour accepter les requêtes depuis 127.0.0.1:5500
 app.use(cors({
-    origin: 'http://127.0.0.1:5500',
-    credentials: true
+    origin: (origin, callback)=>{
+        if(!origin) return callback(null, true);
+        if(allowedOrigins.includes(origin)) return callback(null, true);
+        return callback (new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods : ["GET","POST","PATCH","PUT","DELETE","OPTIONS"],
+    allowedHeaders:["Content-Type", "Authorization"]
 }));
 
 // Middleware pour parser les données du formulaire
 app.use(express.urlencoded({ extended: true }));
 
-// Servir les fichiers statiques du dossier Vue
-app.use(express.static(path.join(__dirname, 'Vue')));
 
 // =====================================================
 // MIDDLEWARE JWT (directement dans index.js)
