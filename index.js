@@ -11,7 +11,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 
-const allowedOrigins = ["https://projet-4-4qcd.onrender.com", "https://projet-4-frontend.onrender.com"].filter(Boolean);
+const allowedOrigins = ["https://projet-4-backend.onrender.com", "https://projet-4-frontend-84i9.onrender.com"].filter(Boolean);
 
 // Configurer CORS pour accepter les requêtes depuis 127.0.0.1:5500
 app.use(cors({
